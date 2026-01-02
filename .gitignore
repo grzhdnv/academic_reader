@@ -1,0 +1,10 @@
+Part2texts/
+Part3texts/
+output/
+bio/
+prompt.txt
+regex.txt
+.venv/
+.env
+src/__pycache__/
+*.md
