@@ -26,17 +26,17 @@ class PDFReader:
     def __init__(self, file_path):
         self.file_path = pathlib.Path(file_path)
 
-    # def test3(self):
-    #     """
-    #     Test gemini-3-flash-preview call without pdf processing.
-    #     """
-    #     response = self.client.models.generate_content(
-    #         model="gemini-3-flash-preview",
-    #         contents="Write a short poem about the sea in the style of Shakespeare.",
-    #     )
+    def test3(self):
+        """
+        Test gemini-3-flash-preview call without pdf processing.
+        """
+        response = self.client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents="Write a short poem about the sea in the style of Shakespeare.",
+        )
 
-    #     print("Response:")
-    #     print(response.text)
+        print("Response:")
+        print(response.text)
 
     def pdf_to_md(self):
         """
@@ -49,7 +49,7 @@ class PDFReader:
             prompt = prompt_file.read()
 
         print("Processing PDF to markdown...")
-        print(os.getenv("MODEL"))
+
         response = self.client.models.generate_content(
             model=os.getenv("MODEL"),
             contents=[
@@ -61,26 +61,51 @@ class PDFReader:
             ],
         )
 
-        # TODO: gemini-3-flash-preview currently fails.
-        # file_upload = self.client.files.upload(file=self.file_path)
+        if response.text is None:
+            print("Error: Response text is None.")
+            print("Full response:", response)
+            return
 
-        # print("File uploaded. Generating content...")
+        output_md_path = self.file_path.with_suffix(".md")
+        with open(output_md_path, "w", encoding="utf-8") as f:
+            f.write(response.text + "\n\nOCR by Gemini 2.5 Flash")  # type: ignore
+            print(f"PDF converted to markdown and saved to {output_md_path}")
 
-        # response = self.client.models.generate_content(
-        #     model="gemini-3-flash-preview",  # Ensure the string is correct
-        #     contents=[
-        #         file_upload,
-        #         prompt,
-        #     ],
-        # )
+    def pdf_to_md_gemini3(self):
+        """
+        Convert PDF to markdown using gemini-3-flash-preview.
+        Write result to a markdown file.
+        """
+        prompt = ""
 
-        # print("Done. Writing to file...")
-        # print(response.candidates[0].content)  # type: ignore
-        # print("\n" + response.text)
+        with open("pdf_to_md.md", "r", encoding="utf-8") as prompt_file:
+            prompt = prompt_file.read()
 
-        with open("test1.md", "w", encoding="utf-8") as f:
-            f.write(response.candidates[0].content)  # type: ignore
-            print("PDF converted to markdown and saved to test.md")
+        print("Uploading PDF to Gemini...")
+        # Upload the file using the File API
+        file_upload = self.client.files.upload(file=self.file_path)
+        print(f"File uploaded: {file_upload.name}")
+
+        print("Processing PDF to markdown using gemini-3-flash-preview...")
+        response = self.client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=[
+                file_upload,
+                prompt,
+            ],
+        )
+
+        if response.text is None:
+            print("Error: Response text is None.")
+            print("Full response:", response)
+            return
+
+        output_md_path = self.file_path.with_suffix(".md")
+        with open(output_md_path, "w", encoding="utf-8") as f:
+            f.write(response.text + "\n\nOCR by Gemini 3 Flash")  # type: ignore
+            print(
+                f"PDF converted to markdown using Gemini 3 and saved to {output_md_path}"
+            )
 
     def summarize(self):
         """
@@ -146,7 +171,34 @@ def process_pdf(file_path):
     pdf_reader.pdf_to_md()
 
 
-process_pdf("./bio/Dorival_2006/02_Ch01.pdf")
+def test_pdf_to_md_gemini3(file_path):
+    pdf_reader = PDFReader(file_path)
+    pdf_reader.pdf_to_md_gemini3()
 
-# pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
-# pdf_reader.test3()
+
+def process_pdfs_in_directory(directory_path):
+    """Process all PDF files in a given directory and its subdirectories."""
+    print(f"Searching for PDF files in {directory_path}...")
+    pdf_files = list(pathlib.Path(directory_path).rglob("*.pdf"))
+    print(f"Found {len(pdf_files)} PDF files.")
+
+    for file_path in pdf_files:
+        print(f"Processing {file_path}...")
+        process_pdf(file_path)
+
+
+if __name__ == "__main__":
+    # --- Process a single PDF file ---
+    # The original call is preserved here for single-file processing.
+    # process_pdf("./bio/Dorival_2006/02_Ch01.pdf")
+
+    # --- Test Gemini 3 PDF to MD ---
+    # test_pdf_to_md_gemini3("./bio/Dorival_2006/02_Ch01.pdf") // Currently fails because of copyright guardrails.
+
+    # --- Process all PDFs in a directory ---
+    process_pdfs_in_directory("./bio/Dorival_2006/")
+
+    # --- Test call without PDF processing ---
+    # pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
+    # pdf_reader.test3()
+    pass
