@@ -7,4 +7,3 @@ regex.txt
 .venv/
 .env
 src/__pycache__/
-*.md
