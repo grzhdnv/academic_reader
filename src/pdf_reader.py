@@ -71,14 +71,14 @@ class PDFReader:
             f.write(response.text + "\n\nOCR by Gemini 2.5 Flash")  # type: ignore
             print(f"PDF converted to markdown and saved to {output_md_path}")
 
-    def pdf_to_md_gemini3(self):
+    def translate_to_md_gemini3(self):
         """
         Convert PDF to markdown using gemini-3-flash-preview.
         Write result to a markdown file.
         """
         prompt = ""
 
-        with open("pdf_to_md.md", "r", encoding="utf-8") as prompt_file:
+        with open("translated_chapter.md", "r", encoding="utf-8") as prompt_file:
             prompt = prompt_file.read()
 
         print("Uploading PDF to Gemini...")
@@ -100,7 +100,9 @@ class PDFReader:
             print("Full response:", response)
             return
 
-        output_md_path = self.file_path.with_suffix(".md")
+        new_path = self.file_path.stem + "_g3translated.md"
+        output_md_path = pathlib.Path(new_path)
+        print(output_md_path)
         with open(output_md_path, "w", encoding="utf-8") as f:
             f.write(response.text + "\n\nOCR by Gemini 3 Flash")  # type: ignore
             print(
@@ -171,9 +173,9 @@ def process_pdf(file_path):
     pdf_reader.pdf_to_md()
 
 
-def test_pdf_to_md_gemini3(file_path):
+def test_translate_to_md_gemini3(file_path):
     pdf_reader = PDFReader(file_path)
-    pdf_reader.pdf_to_md_gemini3()
+    pdf_reader.translate_to_md_gemini3()
 
 
 def process_pdfs_in_directory(directory_path):
@@ -193,10 +195,10 @@ if __name__ == "__main__":
     # process_pdf("./bio/Dorival_2006/02_Ch01.pdf")
 
     # --- Test Gemini 3 PDF to MD ---
-    # test_pdf_to_md_gemini3("./bio/Dorival_2006/02_Ch01.pdf") // Currently fails because of copyright guardrails.
+    # test_translate_to_md_gemini3("./bio/Dorival_2006/02_Ch01.pdf") // Currently fails because of copyright guardrails.
 
     # --- Process all PDFs in a directory ---
-    process_pdfs_in_directory("./bio/Dorival_2006/")
+    # process_pdfs_in_directory("./bio/Dorival_2006/") # DONE
 
     # --- Test call without PDF processing ---
     # pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
