@@ -173,6 +173,11 @@ def process_pdf(file_path):
     pdf_reader.pdf_to_md()
 
 
+def translate_pdf(file_path):
+    pdf_reader = PDFReader(file_path)
+    pdf_reader.translate_to_md_gemini3()
+
+
 def test_translate_to_md_gemini3(file_path):
     pdf_reader = PDFReader(file_path)
     pdf_reader.translate_to_md_gemini3()
@@ -189,6 +194,17 @@ def process_pdfs_in_directory(directory_path):
         process_pdf(file_path)
 
 
+def translate_pdfs_in_directory(directory_path):
+    """Translate all PDF files in a given directory and its subdirectories."""
+    print(f"Searching for PDF files in {directory_path}...")
+    pdf_files = list(pathlib.Path(directory_path).rglob("*.pdf"))
+    print(f"Found {len(pdf_files)} PDF files.")
+
+    for file_path in pdf_files:
+        print(f"Processing {file_path}...")
+        translate_pdf(file_path)
+
+
 if __name__ == "__main__":
     # --- Process a single PDF file ---
     # The original call is preserved here for single-file processing.
@@ -199,6 +215,10 @@ if __name__ == "__main__":
 
     # --- Process all PDFs in a directory ---
     # process_pdfs_in_directory("./bio/Dorival_2006/") # DONE
+
+    # --- Translate all PDFs in a directory ---
+    # TODO: Run this
+    translate_pdfs_in_directory("./bio/Dorival_2006/")
 
     # --- Test call without PDF processing ---
     # pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
