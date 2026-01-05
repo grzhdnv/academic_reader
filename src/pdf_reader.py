@@ -26,18 +26,6 @@ class PDFReader:
     def __init__(self, file_path):
         self.file_path = pathlib.Path(file_path)
 
-    def test3(self):
-        """
-        Test gemini-3-flash-preview call without pdf processing.
-        """
-        response = self.client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents="Write a short poem about the sea in the style of Shakespeare.",
-        )
-
-        print("Response:")
-        print(response.text)
-
     def pdf_to_md(self):
         """
         Convert PDF to markdown using GenAI.
@@ -88,7 +76,7 @@ class PDFReader:
 
         print("Processing PDF to markdown using gemini-3-flash-preview...")
         response = self.client.models.generate_content(
-            model="gemini-3-flash-preview",
+            model=os.getenv("MODEL"),
             contents=[
                 file_upload,
                 prompt,
@@ -178,9 +166,7 @@ def translate_pdf(file_path):
     pdf_reader.translate_to_md_gemini3()
 
 
-def test_translate_to_md_gemini3(file_path):
-    pdf_reader = PDFReader(file_path)
-    pdf_reader.translate_to_md_gemini3()
+# --- Directory processing ---
 
 
 def process_pdfs_in_directory(directory_path):
@@ -218,7 +204,7 @@ if __name__ == "__main__":
 
     # --- Translate all PDFs in a directory ---
     # TODO: Run this
-    translate_pdfs_in_directory("./bio/Dorival_2006/")
+    translate_pdfs_in_directory("./bio/Dorival_2006/missed/")
 
     # --- Test call without PDF processing ---
     # pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
