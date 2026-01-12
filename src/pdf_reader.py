@@ -26,20 +26,19 @@ class PDFReader:
     def __init__(self, file_path):
         self.file_path = pathlib.Path(file_path)
 
-    def pdf_to_md(self):
+    def pdf_to_md(self, prompt_file):
         """
         Convert PDF to markdown using GenAI.
         Write result to a markdown file.
         """
-        prompt = ""
 
-        with open("pdf_to_md.md", "r", encoding="utf-8") as prompt_file:
-            prompt = prompt_file.read()
+        with open(prompt_file, "r", encoding="utf-8") as p:
+            prompt = p.read()
 
         print("Processing PDF to markdown...")
 
         response = self.client.models.generate_content(
-            model=os.getenv("MODEL"),
+            model="gemini-3-flash-preview",
             contents=[
                 types.Part.from_bytes(
                     data=self.file_path.read_bytes(),
@@ -54,9 +53,12 @@ class PDFReader:
             print("Full response:", response)
             return
 
-        output_md_path = self.file_path.with_suffix(".md")
+        # create a subfolder for output
+        output_dir = self.file_path.parent / "tldr"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_md_path = output_dir / self.file_path.with_suffix(".md").name
         with open(output_md_path, "w", encoding="utf-8") as f:
-            f.write(response.text + "\n\nOCR by Gemini 2.5 Flash")  # type: ignore
+            f.write(response.text + "\n\nOCR and TLDR by Gemini 3.0 Flash")  # type: ignore
             print(f"PDF converted to markdown and saved to {output_md_path}")
 
     def translate_to_md_gemini3(self):
@@ -156,9 +158,9 @@ class PDFReader:
             print(f"Summary saved to {PathManager.base_name}_short.md")
 
 
-def process_pdf(file_path):
+def process_pdf(file_path, prompt_file):
     pdf_reader = PDFReader(file_path)
-    pdf_reader.pdf_to_md()
+    pdf_reader.pdf_to_md(prompt_file)
 
 
 def translate_pdf(file_path):
@@ -169,7 +171,7 @@ def translate_pdf(file_path):
 # --- Directory processing ---
 
 
-def process_pdfs_in_directory(directory_path):
+def process_pdfs_in_directory(directory_path, prompt_file):
     """Process all PDF files in a given directory and its subdirectories."""
     print(f"Searching for PDF files in {directory_path}...")
     pdf_files = list(pathlib.Path(directory_path).rglob("*.pdf"))
@@ -177,7 +179,7 @@ def process_pdfs_in_directory(directory_path):
 
     for file_path in pdf_files:
         print(f"Processing {file_path}...")
-        process_pdf(file_path)
+        process_pdf(file_path, prompt_file)
 
 
 def translate_pdfs_in_directory(directory_path):
@@ -194,17 +196,17 @@ def translate_pdfs_in_directory(directory_path):
 if __name__ == "__main__":
     # --- Process a single PDF file ---
     # The original call is preserved here for single-file processing.
-    # process_pdf("./bio/Dorival_2006/02_Ch01.pdf")
+    process_pdf("./bio/Dorival_2006/03_Ch02.pdf", "tldr.md")
 
     # --- Test Gemini 3 PDF to MD ---
     # test_translate_to_md_gemini3("./bio/Dorival_2006/02_Ch01.pdf") // Currently fails because of copyright guardrails.
 
     # --- Process all PDFs in a directory ---
-    # process_pdfs_in_directory("./bio/Dorival_2006/") # DONE
+    # process_pdfs_in_directory("./bio/Dorival_2006/", "tldr.md")  # TLDR setup
 
     # --- Translate all PDFs in a directory ---
     # TODO: Run this
-    translate_pdfs_in_directory("./bio/Dorival_2006/missed/")
+    # translate_pdfs_in_directory("./bio/Dorival_2006/missed/")
 
     # --- Test call without PDF processing ---
     # pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
