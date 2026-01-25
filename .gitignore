@@ -1,8 +1,5 @@
-Part2texts/
-Part3texts/
-output/
-bio/
-prompt.txt
+out/
+data/
 regex.txt
 .venv/
 .env

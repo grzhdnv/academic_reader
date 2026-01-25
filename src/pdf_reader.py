@@ -54,12 +54,48 @@ class PDFReader:
             return
 
         # create a subfolder for output
-        output_dir = self.file_path.parent / "tldr"
+        output_dir = self.file_path.parent / "clean_english"
         output_dir.mkdir(parents=True, exist_ok=True)
         output_md_path = output_dir / self.file_path.with_suffix(".md").name
         with open(output_md_path, "w", encoding="utf-8") as f:
-            f.write(response.text + "\n\nOCR and TLDR by Gemini 3.0 Flash")  # type: ignore
+            f.write(response.text + "\n\nOCR and translation by Gemini 3.0 Flash")  # type: ignore
             print(f"PDF converted to markdown and saved to {output_md_path}")
+
+    @classmethod
+    def md_to_md(self, input_md_path, prompt_file, output_dir="./out/md_md/"):
+        """
+        Convert markdown to improved markdown using GenAI.
+        Write result to a markdown file.
+        """
+
+        with open(prompt_file, "r", encoding="utf-8") as p:
+            prompt = p.read()
+
+        print("Preparing text for TTS...")
+
+        with open(input_md_path, "r", encoding="utf-8") as input_md_file:
+            input_md_content = input_md_file.read()
+
+        response = self.client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=[
+                input_md_content,
+                prompt,
+            ],
+        )
+
+        if response.text is None:
+            print("Error: Response text is None.")
+            print("Full response:", response)
+            return
+
+        # create output path .md in the output directory based onm input file name
+        pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output_md_path = pathlib.Path(output_dir) / pathlib.Path(input_md_path).name
+
+        with open(output_md_path, "w", encoding="utf-8") as f:
+            f.write(response.text + "\n\nPrepared by Gemini 3.0 Flash")  # type: ignore
+            print(f"Text prepared and saved to {output_md_path}")
 
     def translate_to_md_gemini3(self):
         """
@@ -196,19 +232,22 @@ def translate_pdfs_in_directory(directory_path):
 if __name__ == "__main__":
     # --- Process a single PDF file ---
     # The original call is preserved here for single-file processing.
-    process_pdf("./bio/Dorival_2006/03_Ch02.pdf", "tldr.md")
+    # process_pdf("./bio/Dorival_2006/03_Ch02.pdf", "tldr.md")
 
     # --- Test Gemini 3 PDF to MD ---
     # test_translate_to_md_gemini3("./bio/Dorival_2006/02_Ch01.pdf") // Currently fails because of copyright guardrails.
 
     # --- Process all PDFs in a directory ---
-    # process_pdfs_in_directory("./bio/Dorival_2006/", "tldr.md")  # TLDR setup
+    # process_pdfs_in_directory(
+    #   "./bio/Dorival_2006/", "clean_english.md"
+    # )  # Translate clean setup
 
     # --- Translate all PDFs in a directory ---
     # TODO: Run this
     # translate_pdfs_in_directory("./bio/Dorival_2006/missed/")
 
-    # --- Test call without PDF processing ---
-    # pdf_reader = PDFReader("./bio/Dorival_2006/02_Ch01.pdf")
-    # pdf_reader.test3()
+    PDFReader.md_to_md(
+        "./data/Dorival_2006/clean_english/04_Ch03.md",
+        "./prompts/prepare_TTS.md",
+    )
     pass
